@@ -6,8 +6,21 @@ const app = express()
 
 const PORT = process.env.PORT || 3000
 
-app.get('/', (req, res) => {
-    res.send('Hello world!')
+// Database models
+const User = require('./models/user')
+const Job = require('./models/job.js')
+
+app.get('/', async (req, res) => {
+    try {
+        const users = await User.find({})
+        res.json({
+            data: users
+        })
+    } catch (error) {
+        res.json({
+            message: "Something went wrong!"
+        })
+    }
 })
 
 // health api
@@ -21,7 +34,7 @@ app.get('/health', (req, res) => {
 })
 
 app.listen(PORT, () => {
-    mongoose.connect(`${process.env.MONGODB_URI}/${process.env.DB_NAME}`)
+    mongoose.connect(process.env.MONGODB_URI)
         .then(() => console.log(`Server running in http://localhost:${process.env.PORT}`))
         .catch((error) => console.log(error))
 })
