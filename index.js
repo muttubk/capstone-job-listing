@@ -97,6 +97,24 @@ app.get('/login', async (req, res) => {
     }
 })
 
+
+app.use((req, res, next) => {
+    const err = new Error("Not found")
+    err.status = 404
+    next(err)
+})
+
+// error handler
+app.use((err, req, res, next) => {
+    res.status(err.status || 500)
+    res.json({
+        error: {
+            status: err.status || 500,
+            message: err.message
+        }
+    })
+})
+
 app.listen(PORT, () => {
     mongoose.connect(process.env.MONGODB_URI)
         .then(() => console.log(`Server running in http://localhost:${process.env.PORT}`))
