@@ -32,7 +32,8 @@ router.post('/register', async (req, res) => {
         const jwtoken = jwt.sign({ user: userDetails.email }, process.env.JWT_SECRET, { expiresIn: 60 * 60 })
         res.status(200).json({
             message: "User registered successfully!",
-            jwtoken
+            jwtoken,
+            recruiterName: fullName
         })
     } catch (error) {
         errorHandler(res, error)
@@ -57,7 +58,8 @@ router.get('/login', async (req, res) => {
         const jwtoken = jwt.sign(user.toJSON(), process.env.JWT_SECRET, { expiresIn: 60 * 60 })
         res.status(200).json({
             message: "You've logged in successfully!",
-            jwtoken
+            jwtoken,
+            recruiterName: user.fullName
         })
     } catch (error) {
         errorHandler(res, error)
