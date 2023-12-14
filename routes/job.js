@@ -71,10 +71,9 @@ router.patch('/edit-job', isLoggedIn, async (req, res) => {
     }
 })
 
-router.get('/display-jobs', isLoggedIn, async (req, res) => {
+router.get('/display-jobs', async (req, res) => {
     try {
         const { skillsRequired, jobPosition } = req.body
-        console.log(jobPosition)
         const jobPosts = await Job.find({
             $or: [
                 { skillsRequired: { $in: skillsRequired } },
@@ -95,6 +94,22 @@ router.get('/display-jobs', isLoggedIn, async (req, res) => {
     }
 })
 
-
+router.get('/details', async (req, res) => {
+    try {
+        const { job_id } = req.body
+        const jobDetails = await Job.findOne({ _id: job_id })
+        if (!jobDetails) {
+            return res.status(401).json({
+                message: "Job doesn't exists."
+            })
+        }
+        res.status(200).json({
+            message: "Success",
+            jobDetails
+        })
+    } catch (error) {
+        errorHandler(res, error);
+    }
+})
 
 module.exports = router
