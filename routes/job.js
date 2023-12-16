@@ -73,13 +73,27 @@ router.patch('/edit-job', isLoggedIn, async (req, res) => {
 
 router.get('/display-jobs', async (req, res) => {
     try {
-        const { skillsRequired, jobPosition } = req.body
-        const jobPosts = await Job.find({
-            $or: [
-                { skillsRequired: { $in: skillsRequired } },
-                { jobPosition: { $in: jobPosition } }
-            ]
-        })
+        // using req.body
+        // const { skillsRequired, jobPosition } = req.body
+        // const jobPosts = await Job.find({
+        //     $or: [
+        //         { skillsRequired: { $in: skillsRequired } },
+        //         { jobPosition }
+        //     ]
+        // }).sort({ createdAt: - 1 })
+
+        // using req.query
+        const { skillsRequired, jobPosition } = req.query
+        const query = {}
+        if (jobPosition) {
+            query.jobPosition = jobPosition
+        }
+        if (skillsRequired) {
+            query.skillsRequired = { $in: skillsRequired.split('&') }
+        }
+        console.log(query)
+        const jobPosts = await Job.find(query).sort({ createdAt: -1 })
+
         if (jobPosts.length === 0) {
             return res.status(401).json({
                 message: "No jobs found."
