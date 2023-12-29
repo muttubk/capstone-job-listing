@@ -8,7 +8,7 @@ const isLoggedIn = (req, res, next) => {
         req.user = loggedInUser.email
         next()
     } catch (error) {
-        res.json({
+        res.status(401).json({
             message: "You're not logged in."
         })
     }

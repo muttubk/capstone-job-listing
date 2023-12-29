@@ -44,9 +44,9 @@ router.post('/create-job', isLoggedIn, async (req, res) => {
     }
 })
 
-router.patch('/edit-job', isLoggedIn, async (req, res) => {
+router.patch('/edit-job/:job_id', isLoggedIn, async (req, res) => {
     try {
-        const { job_id } = req.body
+        const { job_id } = req.params
         const existingJob = await Job.findOne({ _id: job_id })
         if (!existingJob) {
             return res.status(401).json({
@@ -56,10 +56,15 @@ router.patch('/edit-job', isLoggedIn, async (req, res) => {
         const { companyName, logoURL, jobPosition,
             monthlySalary, jobType, workModel, location, jobDescription,
             aboutCompany, skillsRequired, additionalInfo } = req.body
+        let skillsArray = []
+        if (typeof skillsRequired === "string") {
+            skillsArray = skillsRequired.split(',')
+            skillsArray = skillsArray.map(item => item.trim())
+        }
         let newJobDetails = {
             companyName, logoURL, jobPosition,
             monthlySalary, jobType, workModel, location, jobDescription,
-            aboutCompany, skillsRequired, additionalInfo
+            aboutCompany, skillsRequired: skillsArray, additionalInfo
         }
         const newJob = await Job.findByIdAndUpdate({ _id: job_id }, newJobDetails, { new: true })
         res.status(200).json({
@@ -73,29 +78,29 @@ router.patch('/edit-job', isLoggedIn, async (req, res) => {
 
 router.get('/display-jobs', async (req, res) => {
     try {
-        // using req.body
-        // const { skillsRequired, jobPosition } = req.body
-        // const jobPosts = await Job.find({
-        //     $or: [
-        //         { skillsRequired: { $in: skillsRequired } },
-        //         { jobPosition }
-        //     ]
-        // }).sort({ createdAt: - 1 })
-
-        // using req.query
         const { skillsRequired, jobPosition } = req.query
-        const query = {}
-        if (jobPosition) {
-            query.jobPosition = jobPosition
+
+        //if No filters passed
+        if (!jobPosition && !skillsRequired) {
+            const jobPosts = await Job.find({}).sort({ createdAt: -1 })
+            return res.status(200).json({
+                message: "Success",
+                jobPosts
+            })
         }
-        if (skillsRequired) {
-            query.skillsRequired = { $in: skillsRequired.split('&') }
-        }
-        console.log(query)
-        const jobPosts = await Job.find(query).sort({ createdAt: -1 })
+
+        // sub-queries
+        let query1 = jobPosition !== ''
+            ? { jobPosition: { $regex: `${jobPosition}`, $options: 'i' } }
+            : { jobPosition: '' }
+        let query2 = { skillsRequired: { $in: skillsRequired.split(',') } }
+
+        const jobPosts = await Job.find({
+            $or: [query1, query2]
+        }).sort({ createdAt: -1 })
 
         if (jobPosts.length === 0) {
-            return res.status(401).json({
+            return res.json({
                 message: "No jobs found."
             })
         }
@@ -108,9 +113,9 @@ router.get('/display-jobs', async (req, res) => {
     }
 })
 
-router.get('/details', async (req, res) => {
+router.get('/details/:job_id', async (req, res) => {
     try {
-        const { job_id } = req.body
+        const { job_id } = req.params
         const jobDetails = await Job.findOne({ _id: job_id })
         if (!jobDetails) {
             return res.status(401).json({
@@ -123,6 +128,18 @@ router.get('/details', async (req, res) => {
         })
     } catch (error) {
         errorHandler(res, error);
+    }
+})
+
+router.get('/skills', async (req, res) => {
+    try {
+        const skills = await Job.distinct("skillsRequired")
+        res.status(200).json({
+            message: "Success",
+            skills
+        })
+    } catch (error) {
+        errorHandler(res, error)
     }
 })
 
